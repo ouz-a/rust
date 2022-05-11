@@ -911,6 +911,7 @@ impl<'tcx> Visitor<'tcx> for BorrowCollector {
             Rvalue::Cast(..)
             | Rvalue::ShallowInitBox(..)
             | Rvalue::Use(..)
+            | Rvalue::VirtualRef(..)
             | Rvalue::Repeat(..)
             | Rvalue::Len(..)
             | Rvalue::BinaryOp(..)

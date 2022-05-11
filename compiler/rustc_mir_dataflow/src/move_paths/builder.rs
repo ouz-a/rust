@@ -329,6 +329,7 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
                 }
             }
             Rvalue::Ref(..)
+            | Rvalue::VirtualRef(..)
             | Rvalue::AddressOf(..)
             | Rvalue::Discriminant(..)
             | Rvalue::Len(..)

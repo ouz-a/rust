@@ -66,6 +66,7 @@ mod lower_intrinsics;
 mod lower_slice_len;
 mod marker;
 mod match_branches;
+mod miri_hunter;
 mod multiple_return_terminators;
 mod normalize_array_len;
 mod nrvo;
@@ -415,6 +416,8 @@ fn run_post_borrowck_cleanup_passes<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tc
         &cleanup_post_borrowck::CleanupNonCodegenStatements,
         &simplify::SimplifyCfg::new("early-opt"),
         // These next passes must be executed together
+        &miri_hunter::MiriHunter,
+        &deref_separator::Derefer,
         &add_call_guards::CriticalCallEdges,
         &elaborate_drops::ElaborateDrops,
         // This will remove extraneous landing pads which are no longer
@@ -426,7 +429,6 @@ fn run_post_borrowck_cleanup_passes<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tc
         &add_moves_for_packed_drops::AddMovesForPackedDrops,
         // `AddRetag` needs to run after `ElaborateDrops`. Otherwise it should run fairly late,
         // but before optimizations begin.
-        &deref_separator::Derefer,
         &add_retag::AddRetag,
         &lower_intrinsics::LowerIntrinsics,
         &simplify::SimplifyCfg::new("elaborate-drops"),

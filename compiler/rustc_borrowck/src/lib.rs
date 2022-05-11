@@ -1279,6 +1279,7 @@ impl<'cx, 'tcx> MirBorrowckCtxt<'cx, 'tcx> {
             | Rvalue::ShallowInitBox(ref operand, _ /*ty*/) => {
                 self.consume_operand(location, (operand, span), flow_state)
             }
+            Rvalue::VirtualRef(_) => {}
 
             Rvalue::Len(place) | Rvalue::Discriminant(place) => {
                 let af = match *rvalue {

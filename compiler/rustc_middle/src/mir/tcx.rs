@@ -209,6 +209,10 @@ impl<'tcx> Rvalue<'tcx> {
                 }
             },
             Rvalue::ShallowInitBox(_, ty) => tcx.mk_box(ty),
+            Rvalue::VirtualRef(ref place) => {
+                let op = &Operand::Copy(*place);
+                op.ty(local_decls, tcx)
+            }
         }
     }
 

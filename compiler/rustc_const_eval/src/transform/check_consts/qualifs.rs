@@ -260,6 +260,11 @@ where
             in_place::<Q, _>(cx, in_local, place.as_ref())
         }
 
+        Rvalue::VirtualRef(place) => {
+            let op = &Operand::Copy(*place);
+            in_operand::<Q, _>(cx, in_local, op)
+        }
+
         Rvalue::Use(operand)
         | Rvalue::Repeat(operand, _)
         | Rvalue::UnaryOp(_, operand)

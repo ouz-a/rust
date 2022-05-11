@@ -4,6 +4,7 @@
 
 use rustc_middle::mir;
 use rustc_middle::mir::interpret::{InterpResult, Scalar};
+use rustc_middle::mir::Operand;
 use rustc_middle::ty::layout::LayoutOf;
 
 use super::{InterpCx, Machine};
@@ -169,6 +170,12 @@ impl<'mir, 'tcx: 'mir, M: Machine<'mir, 'tcx>> InterpCx<'mir, 'tcx, M> {
             Use(ref operand) => {
                 // Avoid recomputing the layout
                 let op = self.eval_operand(operand, Some(dest.layout))?;
+                self.copy_op(&op, &dest)?;
+            }
+
+            VirtualRef(ref place) => {
+                let copy_op = &Operand::Copy(*place);
+                let op = self.eval_operand(copy_op, Some(dest.layout))?;
                 self.copy_op(&op, &dest)?;
             }
 

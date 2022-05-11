@@ -2586,6 +2586,8 @@ pub enum Rvalue<'tcx> {
     /// initialized but its content as uninitialized. Like other pointer casts, this in general
     /// affects alias analysis.
     ShallowInitBox(Operand<'tcx>, Ty<'tcx>),
+
+    VirtualRef(Place<'tcx>),
 }
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
@@ -2737,6 +2739,7 @@ impl<'tcx> Debug for Rvalue<'tcx> {
                 };
                 write!(fmt, "&{}{}{:?}", region, kind_str, place)
             }
+            VirtualRef(ref place) => write!(fmt, "{:#?}", place),
 
             AddressOf(mutability, ref place) => {
                 let kind_str = match mutability {
