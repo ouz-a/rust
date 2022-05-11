@@ -86,6 +86,7 @@ pub fn run_passes<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>, passes: &[&dyn
 
     for pass in passes {
         let name = pass.name();
+        trace!(?name);
 
         if let Some((_, polarity)) = overridden_passes.iter().rev().find(|(s, _)| s == &*name) {
             trace!(

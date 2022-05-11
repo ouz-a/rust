@@ -75,6 +75,9 @@ impl<'tcx> MutVisitor<'tcx> for DerefChecker<'tcx> {
             let last_loc = Location { block: loc.block, statement_index: loc.statement_index + 1 };
             self.patcher.add_statement(last_loc, StatementKind::StorageDead(prev_temp));
         }
+        if !place.projection.is_empty() {
+            println!("place.projection {:#?}", place.projection);
+        }
     }
 }
 
