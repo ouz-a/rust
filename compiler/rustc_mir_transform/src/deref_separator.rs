@@ -75,9 +75,6 @@ impl<'tcx> MutVisitor<'tcx> for DerefChecker<'tcx> {
             let last_loc = Location { block: loc.block, statement_index: loc.statement_index + 1 };
             self.patcher.add_statement(last_loc, StatementKind::StorageDead(prev_temp));
         }
-        if !place.projection.is_empty() {
-            trace!("place.projection {:#?}", place.projection);
-        }
     }
 }
 
@@ -95,5 +92,6 @@ pub fn deref_finder<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>) {
 impl<'tcx> MirPass<'tcx> for Derefer {
     fn run_pass(&self, tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>) {
         deref_finder(tcx, body);
+        body.phase = MirPhase::Derefered;
     }
 }
