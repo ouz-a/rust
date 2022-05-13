@@ -76,7 +76,7 @@ impl<'tcx> MutVisitor<'tcx> for DerefChecker<'tcx> {
             self.patcher.add_statement(last_loc, StatementKind::StorageDead(prev_temp));
         }
         if !place.projection.is_empty() {
-            println!("place.projection {:#?}", place.projection);
+            trace!("place.projection {:#?}", place.projection);
         }
     }
 }

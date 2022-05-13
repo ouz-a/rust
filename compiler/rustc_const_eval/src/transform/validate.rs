@@ -304,10 +304,10 @@ impl<'a, 'tcx> Visitor<'tcx> for TypeChecker<'a, 'tcx> {
         // Set off any `bug!`s in the type computation code
         let _ = place.ty(&self.body.local_decls, self.tcx);
         if self.mir_phase >= MirPhase::Deaggregated && place.projection.len() > 1 {
-            println!("place is {:#?}", place);
-            println!("mir phase is {:#?}", self.mir_phase);
-            println!("projection is {:#?}", place.projection);
-            assert!(place.projection[1] != ProjectionElem::Deref);
+            trace!("place is {:#?}", place);
+            trace!("mir phase is {:#?}", self.mir_phase);
+            trace!("projection is {:#?}", place.projection);
+            assert!(!place.projection[1..].contains(&ProjectionElem::Deref));
         }
     }
 
