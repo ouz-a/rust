@@ -13,6 +13,7 @@ use std::iter::TrustedLen;
 /// (lhs as Variant).field0 = arg0;     // We only have a downcast if this is an enum
 /// (lhs as Variant).field1 = arg1;
 /// discriminant(lhs) = variant_index;  // If lhs is an enum or generator.
+#[instrument(level = "trace", skip(tcx, operands))]
 pub fn expand_aggregate<'tcx>(
     orig_lhs: Place<'tcx>,
     operands: impl Iterator<Item = (Operand<'tcx>, Ty<'tcx>)> + TrustedLen,
@@ -55,6 +56,7 @@ pub fn expand_aggregate<'tcx>(
     };
 
     let operands = operands.enumerate().map(move |(i, (op, ty))| {
+        trace!(i, ?op, ?ty);
         let lhs_field = if let AggregateKind::Array(_) = kind {
             let offset = u64::try_from(i).unwrap();
             tcx.mk_place_elem(
@@ -65,6 +67,7 @@ pub fn expand_aggregate<'tcx>(
             let field = Field::new(active_field_index.unwrap_or(i));
             tcx.mk_place_field(lhs, field, ty)
         };
+        trace!(?lhs_field);
         Statement {
             source_info,
             kind: StatementKind::Assign(Box::new((lhs_field, Rvalue::Use(op)))),
