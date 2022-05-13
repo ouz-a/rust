@@ -86,14 +86,10 @@ pub fn run_passes<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>, passes: &[&dyn
 
     for pass in passes {
         let name = pass.name();
-        trace!(?name);
+        let _guard = trace_span!("run pass", %name).entered();
 
         if let Some((_, polarity)) = overridden_passes.iter().rev().find(|(s, _)| s == &*name) {
-            trace!(
-                pass = %name,
-                "{} as requested by flag",
-                if *polarity { "Running" } else { "Not running" },
-            );
+            trace!("{} as requested by flag", if *polarity { "Running" } else { "Not running" },);
             if !polarity {
                 continue;
             }
