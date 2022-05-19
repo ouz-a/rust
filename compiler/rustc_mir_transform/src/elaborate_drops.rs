@@ -16,6 +16,31 @@ use rustc_span::Span;
 use rustc_target::abi::VariantIdx;
 use std::fmt;
 
+use rustc_middle::mir::visit::{MutVisitor, PlaceContext};
+
+struct Bar<'tcx> {
+    tcx: TyCtxt<'tcx>,
+}
+impl<'tcx> MutVisitor<'tcx> for Bar<'tcx> {
+    fn tcx(&self) -> TyCtxt<'tcx> {
+        self.tcx
+    }
+
+    fn visit_place(&mut self, place: &mut Place<'tcx>, _: PlaceContext, _: Location) {
+        if !place.projection.is_empty() {
+            println!("place is {:#?}", place.projection);
+        }
+    }
+}
+
+pub fn place_printer<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>) {
+    let mut bar = Bar { tcx };
+
+    for (bb, data) in body.basic_blocks_mut().iter_enumerated_mut() {
+        bar.visit_basic_block_data(bb, data);
+    }
+}
+
 pub struct ElaborateDrops;
 
 impl<'tcx> MirPass<'tcx> for ElaborateDrops {
@@ -26,6 +51,7 @@ impl<'tcx> MirPass<'tcx> for ElaborateDrops {
     fn run_pass(&self, tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>) {
         debug!("elaborate_drops({:?} @ {:?})", body.source, body.span);
 
+        place_printer(tcx, body);
         let def_id = body.source.def_id();
         let param_env = tcx.param_env_reveal_all_normalized(def_id);
         let move_data = match MoveData::gather_moves(body, tcx, param_env) {
@@ -38,6 +64,7 @@ impl<'tcx> MirPass<'tcx> for ElaborateDrops {
                 move_data
             }
         };
+
         let elaborate_patch = {
             let body = &*body;
             let env = MoveDataParamEnv { move_data, param_env };
@@ -49,7 +76,6 @@ impl<'tcx> MirPass<'tcx> for ElaborateDrops {
                 .pass_name("elaborate_drops")
                 .iterate_to_fixpoint()
                 .into_results_cursor(body);
-
             let uninits = MaybeUninitializedPlaces::new(tcx, body, &env)
                 .mark_inactive_variants_as_uninit()
                 .into_engine(tcx, body)

@@ -46,11 +46,7 @@ impl<'tcx> MutVisitor<'tcx> for DerefChecker<'tcx> {
                 let deref_place = Place::from(place_local)
                     .project_deeper(&p_ref.projection[last_len..], self.tcx);
 
-                self.patcher.add_assign(
-                    loc,
-                    Place::from(temp),
-                    Rvalue::Use(Operand::Copy(deref_place)),
-                );
+                self.patcher.add_assign(loc, Place::from(temp), Rvalue::VirtualRef(deref_place));
                 place_local = temp;
                 last_len = p_ref.projection.len();
 

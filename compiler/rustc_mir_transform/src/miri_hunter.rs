@@ -14,10 +14,12 @@ impl<'tcx> MirPass<'tcx> for MiriHunter {
         let elab = ElaborateDrops {};
         let call_g = AddCallGuards::CriticalCallEdges;
         // derefer before elaborate
+        println!("--------derefer then elaborate-----------------");
         derefer.run_pass(tcx, &mut og_bod);
         call_g.run_pass(tcx, &mut og_bod);
         elab.run_pass(tcx, &mut og_bod);
         // derefer after elaborate
+        println!("--------elaborate then derefer-----------------");
         call_g.run_pass(tcx, &mut clon);
         elab.run_pass(tcx, &mut clon);
         derefer.run_pass(tcx, &mut clon);
