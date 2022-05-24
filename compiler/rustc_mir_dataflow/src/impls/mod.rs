@@ -65,7 +65,7 @@ pub use self::storage_liveness::{MaybeRequiresStorage, MaybeStorageLive};
 /// places that would require a dynamic drop-flag at that statement.
 pub struct MaybeInitializedPlaces<'a, 'tcx> {
     tcx: TyCtxt<'tcx>,
-    body: &'a Body<'tcx>,
+    pub body: &'a Body<'tcx>,
     mdpe: &'a MoveDataParamEnv<'tcx>,
 }
 
@@ -118,7 +118,7 @@ impl<'a, 'tcx> HasMoveData<'tcx> for MaybeInitializedPlaces<'a, 'tcx> {
 /// places that would require a dynamic drop-flag at that statement.
 pub struct MaybeUninitializedPlaces<'a, 'tcx> {
     tcx: TyCtxt<'tcx>,
-    body: &'a Body<'tcx>,
+    pub body: &'a Body<'tcx>,
     mdpe: &'a MoveDataParamEnv<'tcx>,
 
     mark_inactive_variants_as_uninit: bool,

@@ -2098,7 +2098,9 @@ impl<'tcx> Place<'tcx> {
     pub fn is_indirect(&self) -> bool {
         self.projection.iter().any(|elem| elem.is_indirect())
     }
-
+    pub fn has_deref(&self) -> bool {
+        self.projection.first() == Some(&PlaceElem::Deref)
+    }
     /// Finds the innermost `Local` from this `Place`, *if* it is either a local itself or
     /// a single deref of a local.
     #[inline(always)]

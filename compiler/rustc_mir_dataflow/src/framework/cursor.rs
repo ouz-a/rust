@@ -27,7 +27,7 @@ pub struct ResultsCursor<'mir, 'tcx, A, R = Results<'tcx, A>>
 where
     A: Analysis<'tcx>,
 {
-    body: &'mir mir::Body<'tcx>,
+    pub body: &'mir mir::Body<'tcx>,
     results: R,
     state: A::Domain,
 

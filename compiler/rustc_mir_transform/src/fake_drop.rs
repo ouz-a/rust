@@ -21,7 +21,6 @@ use rustc_middle::mir::visit::{MutVisitor, PlaceContext};
 struct Bar<'tcx> {
     tcx: TyCtxt<'tcx>,
 }
-
 impl<'tcx> MutVisitor<'tcx> for Bar<'tcx> {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.tcx
@@ -33,7 +32,6 @@ impl<'tcx> MutVisitor<'tcx> for Bar<'tcx> {
         }
     }
 }
-
 #[allow(dead_code)]
 pub fn count_drop<'tcx>(body: &Body<'tcx>) -> i32 {
     let mut drop_count = 0;
@@ -55,15 +53,15 @@ pub fn place_printer<'tcx>(tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>) {
         bar.visit_basic_block_data(bb, data);
     }
 }
-pub struct ElaborateDrops;
 
-impl<'tcx> MirPass<'tcx> for ElaborateDrops {
+pub struct FakeDrops;
+
+impl<'tcx> MirPass<'tcx> for FakeDrops {
     fn phase_change(&self) -> Option<MirPhase> {
         Some(MirPhase::DropsLowered)
     }
 
     fn run_pass(&self, tcx: TyCtxt<'tcx>, body: &mut Body<'tcx>) {
-        place_printer(tcx, body);
         let def_id = body.source.def_id();
         let param_env = tcx.param_env_reveal_all_normalized(def_id);
         let move_data = match MoveData::gather_moves(body, tcx, param_env) {
@@ -87,6 +85,7 @@ impl<'tcx> MirPass<'tcx> for ElaborateDrops {
                 .pass_name("elaborate_drops")
                 .iterate_to_fixpoint()
                 .into_results_cursor(body);
+
             let uninits = MaybeUninitializedPlaces::new(tcx, body, &env)
                 .mark_inactive_variants_as_uninit()
                 .into_engine(tcx, body)
@@ -107,8 +106,6 @@ impl<'tcx> MirPass<'tcx> for ElaborateDrops {
         };
 
         elaborate_patch.apply(body);
-        println!("------################# -----------------");
-        place_printer(tcx, body);
     }
 }
 
@@ -361,10 +358,11 @@ impl<'b, 'tcx> ElaborateDropsCtxt<'b, 'tcx> {
         for (bb, data) in self.body.basic_blocks().iter_enumerated() {
             let loc = Location { block: bb, statement_index: data.statements.len() };
             let terminator = data.terminator();
+
             let resume_block = self.patch.resume_block();
             match terminator.kind {
                 TerminatorKind::Drop { place, target, unwind } => {
-                    debug!("drop terminator: {:#?}", terminator);
+                    debug!("fake drop: terminator {:#?}", terminator);
                     self.init_data.seek_before(loc);
                     match self.move_data().rev_lookup.find(place.as_ref()) {
                         LookupResult::Exact(path) => elaborate_drop(

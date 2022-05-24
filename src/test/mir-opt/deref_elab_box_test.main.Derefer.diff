@@ -1,0 +1,122 @@
+- // MIR for `main` before Derefer
++ // MIR for `main` after Derefer
+  
+  fn main() -> () {
+      let mut _0: ();                      // return place in scope 0 at $DIR/deref_elab_box_test.rs:52:11: 52:11
+      let _1: std::io::Error;              // in scope 0 at $DIR/deref_elab_box_test.rs:53:9: 53:21
+      let mut _2: std::io::ErrorKind;      // in scope 0 at $DIR/deref_elab_box_test.rs:53:40: 53:56
+      let mut _4: std::io::Error;          // in scope 0 at $DIR/deref_elab_box_test.rs:54:34: 54:46
+      let mut _6: ErrorCode;               // in scope 0 at $DIR/deref_elab_box_test.rs:55:22: 55:30
+      let _7: Error;                       // in scope 0 at $DIR/deref_elab_box_test.rs:56:5: 56:29
+      let mut _8: Error;                   // in scope 0 at $DIR/deref_elab_box_test.rs:56:5: 56:8
+      scope 1 {
+          debug custom_error => _1;        // in scope 1 at $DIR/deref_elab_box_test.rs:53:9: 53:21
+          let _3: ErrorCode;               // in scope 1 at $DIR/deref_elab_box_test.rs:54:9: 54:17
+          scope 2 {
+              debug err_code => _3;        // in scope 2 at $DIR/deref_elab_box_test.rs:54:9: 54:17
+              let _5: Error;               // in scope 2 at $DIR/deref_elab_box_test.rs:55:9: 55:12
+              scope 3 {
+                  debug err => _5;         // in scope 3 at $DIR/deref_elab_box_test.rs:55:9: 55:12
+              }
+          }
+      }
+  
+      bb0: {
+          StorageLive(_1);                 // scope 0 at $DIR/deref_elab_box_test.rs:53:9: 53:21
+          StorageLive(_2);                 // scope 0 at $DIR/deref_elab_box_test.rs:53:40: 53:56
+          _2 = Other;                      // scope 0 at $DIR/deref_elab_box_test.rs:53:40: 53:56
+          _1 = std::io::Error::new::<&str>(move _2, const "oh no!") -> bb1; // scope 0 at $DIR/deref_elab_box_test.rs:53:24: 53:67
+                                           // mir::Constant
+                                           // + span: $DIR/deref_elab_box_test.rs:53:24: 53:39
+                                           // + user_ty: UserType(0)
+                                           // + literal: Const { ty: fn(ErrorKind, &str) -> std::io::Error {std::io::Error::new::<&str>}, val: Value(Scalar(<ZST>)) }
+                                           // mir::Constant
+                                           // + span: $DIR/deref_elab_box_test.rs:53:58: 53:66
+                                           // + literal: Const { ty: &str, val: Value(Slice { data: Allocation { bytes: [111, 104, 32, 110, 111, 33], relocations: Relocations(SortedMap { data: [] }), init_mask: InitMask { blocks: [63], len: Size { raw: 6 } }, align: Align { pow2: 0 }, mutability: Not, extra: () }, start: 0, end: 6 }) }
+      }
+  
+      bb1: {
+          StorageDead(_2);                 // scope 0 at $DIR/deref_elab_box_test.rs:53:66: 53:67
+          StorageLive(_3);                 // scope 1 at $DIR/deref_elab_box_test.rs:54:9: 54:17
+          StorageLive(_4);                 // scope 1 at $DIR/deref_elab_box_test.rs:54:34: 54:46
+          _4 = move _1;                    // scope 1 at $DIR/deref_elab_box_test.rs:54:34: 54:46
+          _3 = ErrorCode::Io(move _4);     // scope 1 at $DIR/deref_elab_box_test.rs:54:20: 54:47
+          drop(_4) -> [return: bb2, unwind: bb13]; // scope 1 at $DIR/deref_elab_box_test.rs:54:46: 54:47
+      }
+  
+      bb2: {
+          StorageDead(_4);                 // scope 1 at $DIR/deref_elab_box_test.rs:54:46: 54:47
+          StorageLive(_5);                 // scope 2 at $DIR/deref_elab_box_test.rs:55:9: 55:12
+          StorageLive(_6);                 // scope 2 at $DIR/deref_elab_box_test.rs:55:22: 55:30
+          _6 = move _3;                    // scope 2 at $DIR/deref_elab_box_test.rs:55:22: 55:30
+          _5 = ret_er(move _6) -> [return: bb3, unwind: bb11]; // scope 2 at $DIR/deref_elab_box_test.rs:55:15: 55:31
+                                           // mir::Constant
+                                           // + span: $DIR/deref_elab_box_test.rs:55:15: 55:21
+                                           // + literal: Const { ty: fn(ErrorCode) -> Error {ret_er}, val: Value(Scalar(<ZST>)) }
+      }
+  
+      bb3: {
+          StorageDead(_6);                 // scope 2 at $DIR/deref_elab_box_test.rs:55:30: 55:31
+          StorageLive(_7);                 // scope 3 at $DIR/deref_elab_box_test.rs:56:5: 56:29
+          StorageLive(_8);                 // scope 3 at $DIR/deref_elab_box_test.rs:56:5: 56:8
+          _8 = move _5;                    // scope 3 at $DIR/deref_elab_box_test.rs:56:5: 56:8
+          _7 = Error::fix_position::<fn(ErrorCode) -> Error {ret_er}>(move _8, ret_er) -> [return: bb4, unwind: bb9]; // scope 3 at $DIR/deref_elab_box_test.rs:56:5: 56:29
+                                           // mir::Constant
+                                           // + span: $DIR/deref_elab_box_test.rs:56:9: 56:21
+                                           // + literal: Const { ty: fn(Error, fn(ErrorCode) -> Error {ret_er}) -> Error {Error::fix_position::<fn(ErrorCode) -> Error {ret_er}>}, val: Value(Scalar(<ZST>)) }
+                                           // mir::Constant
+                                           // + span: $DIR/deref_elab_box_test.rs:56:22: 56:28
+                                           // + literal: Const { ty: fn(ErrorCode) -> Error {ret_er}, val: Value(Scalar(<ZST>)) }
+      }
+  
+      bb4: {
+          StorageDead(_8);                 // scope 3 at $DIR/deref_elab_box_test.rs:56:28: 56:29
+          drop(_7) -> [return: bb5, unwind: bb10]; // scope 3 at $DIR/deref_elab_box_test.rs:56:29: 56:30
+      }
+  
+      bb5: {
+          StorageDead(_7);                 // scope 3 at $DIR/deref_elab_box_test.rs:56:29: 56:30
+          _0 = const ();                   // scope 0 at $DIR/deref_elab_box_test.rs:52:11: 57:2
+          drop(_5) -> [return: bb6, unwind: bb12]; // scope 2 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+      }
+  
+      bb6: {
+          StorageDead(_5);                 // scope 2 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+          drop(_3) -> [return: bb7, unwind: bb13]; // scope 1 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+      }
+  
+      bb7: {
+          StorageDead(_3);                 // scope 1 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+          drop(_1) -> bb8;                 // scope 0 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+      }
+  
+      bb8: {
+          StorageDead(_1);                 // scope 0 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+          return;                          // scope 0 at $DIR/deref_elab_box_test.rs:57:2: 57:2
+      }
+  
+      bb9 (cleanup): {
+          drop(_8) -> bb10;                // scope 3 at $DIR/deref_elab_box_test.rs:56:28: 56:29
+      }
+  
+      bb10 (cleanup): {
+          drop(_5) -> bb12;                // scope 2 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+      }
+  
+      bb11 (cleanup): {
+          drop(_6) -> bb12;                // scope 2 at $DIR/deref_elab_box_test.rs:55:30: 55:31
+      }
+  
+      bb12 (cleanup): {
+          drop(_3) -> bb13;                // scope 1 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+      }
+  
+      bb13 (cleanup): {
+          drop(_1) -> bb14;                // scope 0 at $DIR/deref_elab_box_test.rs:57:1: 57:2
+      }
+  
+      bb14 (cleanup): {
+          resume;                          // scope 0 at $DIR/deref_elab_box_test.rs:52:1: 57:2
+      }
+  }
+  

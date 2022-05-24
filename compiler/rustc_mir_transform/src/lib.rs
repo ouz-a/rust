@@ -58,6 +58,7 @@ mod dest_prop;
 pub mod dump_mir;
 mod early_otherwise_branch;
 mod elaborate_drops;
+mod fake_drop;
 mod function_item_references;
 mod generator;
 mod inline;

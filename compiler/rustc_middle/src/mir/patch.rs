@@ -16,6 +16,17 @@ pub struct MirPatch<'tcx> {
 }
 
 impl<'tcx> MirPatch<'tcx> {
+    pub fn count_drop(&self) -> i32 {
+        let mut drop_count = 0;
+        for term in self.new_blocks.iter() {
+            if let Some(term) = &term.terminator {
+                if let TerminatorKind::Drop { .. } = term.kind {
+                    drop_count += 1
+                }
+            }
+        }
+        drop_count
+    }
     pub fn new(body: &Body<'tcx>) -> Self {
         let mut result = MirPatch {
             patch_map: IndexVec::from_elem(None, body.basic_blocks()),
