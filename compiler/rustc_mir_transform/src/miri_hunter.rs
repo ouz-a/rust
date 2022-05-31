@@ -32,10 +32,12 @@ impl<'tcx> MirPass<'tcx> for MiriHunter {
         derefer.run_pass(tcx, &mut og_bod);
         call_g.run_pass(tcx, &mut og_bod);
         fake_elab.run_pass(tcx, &mut og_bod);
+        println!("DEREF DEREF DEREDEREFDEREFDEREFDEREFF");
         // derefer after elaborate
         call_g.run_pass(tcx, &mut clon);
         elab.run_pass(tcx, &mut clon);
         derefer.run_pass(tcx, &mut clon);
+        println!("ELAB ELAB ELAB ELAB ELAB ELAB");
 
         let deref_before_elab = count_drop(&mut og_bod);
         println!("--------------deref before elab up-------------");

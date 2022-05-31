@@ -27,9 +27,7 @@ impl<'tcx> MutVisitor<'tcx> for Bar<'tcx> {
     }
 
     fn visit_place(&mut self, place: &mut Place<'tcx>, _: PlaceContext, _: Location) {
-        if !place.projection.is_empty() {
-            println!("-------------------- {:#?}", place.projection);
-        }
+        if !place.projection.is_empty() {}
     }
 }
 #[allow(dead_code)]

@@ -1597,6 +1597,17 @@ impl Statement<'_> {
             kind: mem::replace(&mut self.kind, StatementKind::Nop),
         }
     }
+    pub fn ret_place(&self) -> Option<Place<'_>> {
+        match self.kind {
+            StatementKind::Assign(box (place, ..)) => Some(place),
+            StatementKind::FakeRead(box (_a, place)) => Some(place),
+            StatementKind::SetDiscriminant { box place, .. } => Some(place),
+            StatementKind::Deinit(box place) => Some(place),
+            StatementKind::Retag(_, box place) => Some(place),
+            StatementKind::AscribeUserType(box (place, ..), _) => Some(place),
+            _ => None,
+        }
+    }
 }
 
 /// The various kinds of statements that can appear in MIR.
