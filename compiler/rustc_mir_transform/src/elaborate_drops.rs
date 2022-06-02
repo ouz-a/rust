@@ -105,7 +105,7 @@ impl<'tcx> MirPass<'tcx> for ElaborateDrops {
         };
 
         elaborate_patch.apply(body);
-        println!("------################# -----------------");
+        trace!("------################# -----------------");
         place_printer(tcx, body);
     }
 }

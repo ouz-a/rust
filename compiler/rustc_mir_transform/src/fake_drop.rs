@@ -64,12 +64,13 @@ impl<'tcx> MirPass<'tcx> for FakeDrops {
         let param_env = tcx.param_env_reveal_all_normalized(def_id);
         let move_data = match MoveData::gather_moves(body, tcx, param_env) {
             Ok(move_data) => move_data,
-            Err((move_data, _)) => {
-                tcx.sess.delay_span_bug(
+            Err((_, err)) => {
+                span_bug!(
                     body.span,
-                    "No `move_errors` should be allowed in MIR borrowck",
+                    "No `move_errors` should be allowed in MIR borrowck: {:#?}, {:#?}",
+                    err,
+                    body,
                 );
-                move_data
             }
         };
         let elaborate_patch = {

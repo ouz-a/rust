@@ -2752,7 +2752,7 @@ impl<'tcx> Debug for Rvalue<'tcx> {
                 };
                 write!(fmt, "&{}{}{:?}", region, kind_str, place)
             }
-            VirtualRef(ref place) => write!(fmt, "{:#?}", place),
+            VirtualRef(ref place) => write!(fmt, "&'virt {:#?}", place),
 
             AddressOf(mutability, ref place) => {
                 let kind_str = match mutability {

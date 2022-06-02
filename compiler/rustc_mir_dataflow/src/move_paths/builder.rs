@@ -1,3 +1,4 @@
+use rustc_data_structures::fx::FxHashMap;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::tcx::RvalueInitializationState;
 use rustc_middle::mir::*;
@@ -19,6 +20,7 @@ struct MoveDataBuilder<'a, 'tcx> {
     param_env: ty::ParamEnv<'tcx>,
     data: MoveData<'tcx>,
     errors: Vec<(Place<'tcx>, MoveError<'tcx>)>,
+    derefer_sidetable: FxHashMap<Local, Place<'tcx>>,
 }
 
 impl<'a, 'tcx> MoveDataBuilder<'a, 'tcx> {
@@ -32,6 +34,7 @@ impl<'a, 'tcx> MoveDataBuilder<'a, 'tcx> {
             tcx,
             param_env,
             errors: Vec::new(),
+            derefer_sidetable: Default::default(),
             data: MoveData {
                 moves: IndexVec::new(),
                 loc_map: LocationMap::new(body),
@@ -94,6 +97,11 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
     ///
     /// Maybe we should have separate "borrowck" and "moveck" modes.
     fn move_path_for(&mut self, place: Place<'tcx>) -> Result<MovePathIndex, MoveError<'tcx>> {
+        if let Some(new_place) = self.derefer(place.as_ref()) {
+            // recurse instead of trying to follow longer deref chains manually.
+            return self.move_path_for(new_place);
+        }
+
         debug!("lookup({:?})", place);
         let mut base = self.builder.data.rev_lookup.locals[place.local];
 
@@ -276,6 +284,10 @@ struct Gatherer<'b, 'a, 'tcx> {
 impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
     fn gather_statement(&mut self, stmt: &Statement<'tcx>) {
         match &stmt.kind {
+            StatementKind::Assign(box (place, Rvalue::VirtualRef(reffed))) => {
+                assert!(place.projection.is_empty());
+                self.builder.derefer_sidetable.insert(place.local, *reffed);
+            }
             StatementKind::Assign(box (place, rval)) => {
                 self.create_move_path(*place);
                 if let RvalueInitializationState::Shallow = rval.initialization_state() {
@@ -294,7 +306,10 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
             }
             StatementKind::StorageLive(_) => {}
             StatementKind::StorageDead(local) => {
-                self.gather_move(Place::from(*local));
+                // DerefTemp locals (results of VirtualRef) don't actually move anything.
+                if !self.builder.derefer_sidetable.contains_key(&local) {
+                    self.gather_move(Place::from(*local));
+                }
             }
             StatementKind::SetDiscriminant { .. } | StatementKind::Deinit(..) => {
                 span_bug!(
@@ -328,8 +343,8 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
                     self.gather_operand(operand);
                 }
             }
+            Rvalue::VirtualRef(..) => unreachable!(),
             Rvalue::Ref(..)
-            | Rvalue::VirtualRef(..)
             | Rvalue::AddressOf(..)
             | Rvalue::Discriminant(..)
             | Rvalue::Len(..)
@@ -437,8 +452,29 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
         }
     }
 
+    #[instrument(level = "debug", skip(self))]
+    fn derefer(&self, place: PlaceRef<'tcx>) -> Option<Place<'tcx>> {
+        let reffed = self.builder.derefer_sidetable.get(&place.local)?;
+        // place is `_x.deref.field_a`
+        // reffed is `_y.field_b`
+        // This means originally we had `_y.field_b.deref.field_a`, but derefer split it up.
+        // Here we undo that XD
+        // FIXME: rewrite the rest of the logic in this function so we can avoid building
+        // places that have multiple derefs in them.
+        let new_place = reffed.project_deeper(place.projection, self.builder.tcx);
+        debug!(?reffed, ?new_place);
+        Some(new_place)
+    }
+
+    #[instrument(level = "debug", skip(self))]
     fn gather_move(&mut self, place: Place<'tcx>) {
-        debug!("gather_move({:?}, {:?})", self.loc, place);
+        debug!(?self.loc);
+
+        if let Some(new_place) = self.derefer(place.as_ref()) {
+            // recurse instead of trying to follow longer deref chains manually.
+            self.gather_move(new_place);
+            return;
+        }
 
         if let [ref base @ .., ProjectionElem::Subslice { from, to, from_end: false }] =
             **place.projection
@@ -482,6 +518,7 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
     }
 
     fn record_move(&mut self, place: Place<'tcx>, path: MovePathIndex) {
+        assert_eq!(self.builder.derefer_sidetable.get(&place.local), None);
         let move_out = self.builder.data.moves.push(MoveOut { path, source: self.loc });
         debug!(
             "gather_move({:?}, {:?}): adding move {:?} of {:?}",
@@ -493,6 +530,12 @@ impl<'b, 'a, 'tcx> Gatherer<'b, 'a, 'tcx> {
 
     fn gather_init(&mut self, place: PlaceRef<'tcx>, kind: InitKind) {
         debug!("gather_init({:?}, {:?})", self.loc, place);
+
+        if let Some(new_place) = self.derefer(place) {
+            // recurse instead of trying to follow longer deref chains manually.
+            self.gather_init(new_place.as_ref(), kind);
+            return;
+        }
 
         let mut place = place;
 

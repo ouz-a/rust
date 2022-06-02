@@ -32,46 +32,46 @@ impl<'tcx> MirPass<'tcx> for MiriHunter {
         derefer.run_pass(tcx, &mut og_bod);
         call_g.run_pass(tcx, &mut og_bod);
         fake_elab.run_pass(tcx, &mut og_bod);
-        println!("DEREF DEREF DEREDEREFDEREFDEREFDEREFF");
+        trace!("DEREF DEREF DEREDEREFDEREFDEREFDEREFF");
         // derefer after elaborate
         call_g.run_pass(tcx, &mut clon);
         elab.run_pass(tcx, &mut clon);
         derefer.run_pass(tcx, &mut clon);
-        println!("ELAB ELAB ELAB ELAB ELAB ELAB");
+        trace!("ELAB ELAB ELAB ELAB ELAB ELAB");
 
         let deref_before_elab = count_drop(&mut og_bod);
-        println!("--------------deref before elab up-------------");
+        trace!("--------------deref before elab up-------------");
         let deref_after_elab = count_drop(&mut clon);
         if deref_before_elab != deref_after_elab {
             let mut a = Vec::new();
             let mut f = Vec::new();
             with_no_trimmed_paths!({
-                println!("d-b {}   d-a {} ", deref_before_elab, deref_after_elab);
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
-                println!("--------------------------------------------------");
+                trace!("d-b {}   d-a {} ", deref_before_elab, deref_after_elab);
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
+                trace!("--------------------------------------------------");
                 write_mir_fn(tcx, &og_bod, &mut |_, _| Ok(()), &mut a).unwrap();
                 write_mir_fn(tcx, &clon, &mut |_, _| Ok(()), &mut f).unwrap();
                 let pop = String::from_utf8_lossy(&a);
                 if !pop.contains("syn") {
-                    // println!("deref before elab {}", deref_before_elab);
-                    //println!("deref after elab {}", deref_after_elab);
-                    //println!("deref then elab {}", String::from_utf8_lossy(&a));
-                    //println!("elab then deref {}", String::from_utf8_lossy(&f));
+                    trace!("deref before elab {}", deref_before_elab);
+                    trace!("deref after elab {}", deref_after_elab);
+                    trace!("deref then elab {}", String::from_utf8_lossy(&a));
+                    trace!("elab then deref {}", String::from_utf8_lossy(&f));
                     //span_bug!(og_bod.span, "og bod");
                 }
             });
         }
-        println!("------------end------------");
+        trace!("------------end------------");
     }
 }
