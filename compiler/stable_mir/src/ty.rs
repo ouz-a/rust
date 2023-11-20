@@ -19,6 +19,33 @@ impl Ty {
     pub fn kind(&self) -> TyKind {
         with(|context| context.ty_kind(*self))
     }
+
+    pub fn builtin_deref(self, _: bool) -> Option<TypeAndMut> {
+        match self.kind() {
+            TyKind::RigidTy(rigid_ty) => match rigid_ty {
+                RigidTy::Adt(def, _) => with(|context| {
+                    if context.adt_is_box(def) {
+                        Some(TypeAndMut { ty: self.boxed_type(), mutability: Mutability::Mut })
+                    } else {
+                        None
+                    }
+                }),
+                RigidTy::RawPtr(ty, mutability) => Some(TypeAndMut { ty, mutability }),
+                RigidTy::Ref(_, ty, mutability) => Some(TypeAndMut { ty, mutability }),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
+    pub fn boxed_type(&self) -> Ty {
+        with(|context| context.boxed_type(*self))
+    }
+}
+
+pub struct TypeAndMut {
+    pub ty: Ty,
+    pub mutability: Mutability,
 }
 
 /// Represents a constant in MIR or from the Type system.

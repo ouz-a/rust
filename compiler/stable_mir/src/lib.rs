@@ -227,6 +227,12 @@ pub trait Context {
     /// Returns the kind of a given algebraic data type
     fn adt_kind(&self, def: AdtDef) -> AdtKind;
 
+    /// Checks if given `AdtDef` is a box
+    fn adt_is_box(&self, def: AdtDef) -> bool;
+
+    /// Returns boxed type of given `AdtDef`
+    fn boxed_type(&self, ty: Ty) -> Ty;
+
     /// Returns the type of given crate item.
     fn def_ty(&self, item: DefId) -> Ty;
 

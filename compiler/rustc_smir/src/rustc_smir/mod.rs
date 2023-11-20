@@ -9,6 +9,7 @@
 
 use crate::rustc_internal::{internal, IndexMap, RustcInternal};
 use crate::rustc_smir::stable_mir::ty::{BoundRegion, Region};
+use core::panic;
 use rustc_hir as hir;
 use rustc_hir::def::DefKind;
 use rustc_middle::mir;
@@ -98,6 +99,30 @@ impl<'tcx> Context for TablesWrapper<'tcx> {
             panic!("Expected an ADT definition, but found: {ty:?}")
         };
         def.adt_kind().stable(&mut *tables)
+    }
+
+    fn adt_is_box(&self, def: AdtDef) -> bool {
+        let mut tables = self.0.borrow_mut();
+        let is_box =
+            tables.tcx.type_of(def.0.internal(&mut *tables)).instantiate_identity().is_box();
+        is_box
+    }
+
+    fn boxed_type(&self, ty: stable_mir::ty::Ty) -> stable_mir::ty::Ty {
+        let mut tables = self.0.borrow_mut();
+        let def = match ty.kind() {
+            TyKind::RigidTy(rigid) => match rigid {
+                RigidTy::Adt(adt_def, _) => adt_def,
+                _ => panic!("Expected Adt but got {ty:?}"),
+            },
+            _ => panic!("Expected a boxed type, but found: {ty:?}"),
+        };
+        let ty = tables.tcx.type_of(def.0.internal(&mut *tables)).instantiate_identity().kind();
+        let boxed_type = match ty {
+            ty::TyKind::Adt(def, args) if def.is_box() => args.type_at(0),
+            _ => panic!("Expected a boxed type, but found: {ty:?}"),
+        };
+        boxed_type.stable(&mut *tables)
     }
 
     fn def_ty(&self, item: stable_mir::DefId) -> stable_mir::ty::Ty {
